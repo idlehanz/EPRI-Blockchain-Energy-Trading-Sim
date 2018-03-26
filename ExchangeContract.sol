@@ -44,6 +44,7 @@ contract VoltExchange {
     int totalEstUsage = 0;           // Total usage in wh from critical users
     int demandoffers = 0;            // Total demand offers from noncritical users
     int generationoffers = 0;        // Total generation offers from noncritical users
+    int netOpWhLosses = 0;
     
     //****************************************************************
     // Creates new Customer object, default noncritical 
@@ -98,8 +99,8 @@ contract VoltExchange {
     
     //CUSTOMER FUNCTIONS
     //****************************************************************
-    //fallback function
-    function () public payable {
+    // Deposit function
+    function depositETH() public payable {                //Changed to deposit function from fallback
         int addedfunds = int(msg.value);
         if(!isCustomer(msg.sender)){                      //If the sender is not a custmer they get added to customers
             addCustomer(msg.sender,addedfunds);           //along with their funds submitted
@@ -116,8 +117,8 @@ contract VoltExchange {
     
     //****************************************************************
     // Critical users submit estimated usage
-    function estUsage(int usage) public constant returns (int){
-        if(isCustomer(msg.sender) == false){                      //If they are not a customer they have no balance and can not submit usage
+    function estUsage(int usage) public returns (int){
+        if(isCustomer(msg.sender) == false){              //If they are not a customer they have no balance and can not submit usage
             revert();                                     //Revert to save the cost of gas
         }
         if(!isCritical(msg.sender)){                      //If they are not a current critical user they are updated to one.
@@ -130,19 +131,18 @@ contract VoltExchange {
     
     //****************************************************************
     // Non-critical users offer demand/price
-     function offerDemand(int demand, int price) public constant returns (int){
+     function offerDemand(int demand, int price) public{
         if(isCritical(msg.sender)){
             revert();
         }
         addOffDem(msg.sender,demand,price);               //Struct created for demand offers
         DemOffAddrs.push(msg.sender);                     //Array to hold open demand offers
         demandoffers++;                                   //Running total of demand offers
-        return offdemands[msg.sender].price;
     }    
         
     //****************************************************************
     // Non-critical users offer generation/price    
-    function offerGeneration(int generation, int price) public constant returns (int){
+    function offerGeneration(int generation, int price) public returns (int){
         if(isCritical(msg.sender)){
             revert();
         }
@@ -151,6 +151,10 @@ contract VoltExchange {
         generationoffers++;                               //Running total of demand offers
         return offgenerations[msg.sender].price;
     }    
+    
+    function recieveLossesEst(int losses) public {
+        netOpWhLosses = losses;
+    }
     
     
     
