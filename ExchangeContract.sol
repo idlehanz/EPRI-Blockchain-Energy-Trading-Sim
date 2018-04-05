@@ -64,6 +64,29 @@ contract VoltExchange {
         return true;
     }
     
+    function sortDemoffers(address addr) private returns (bool success) {
+        address[] tempAddrs;
+        int placed = 0;
+        if(demandoffers == 0){
+            DemOffAddrs.push(addr);
+        }
+        else{
+            for(int i = 0; i < demandoffers; i++){
+                if(offdemands[addr].price < offdemands[DemOffAddrs[i]].price && placed == 0){
+                    placed = 1;
+                    tempAddrs.push(addr);
+                    tempAddrs.push(DemOffAddrs[i]);
+                }
+                else{
+                    tempAddrs.push(DemOffAddrs[i]);
+                }
+            }
+        }
+        
+        //replace DemOffAddrs with tempAddrs!!!!!!!
+        
+    }
+    
     //****************************************************************
     // Creates new Offered Generation object
     function addOffGen(address addr, int generation, int price) private returns (bool success){
@@ -136,9 +159,11 @@ contract VoltExchange {
             revert();
         }
         addOffDem(msg.sender,demand,price);               //Struct created for demand offers
-        DemOffAddrs.push(msg.sender);                     //Array to hold open demand offers
+        sortDemoffers(msg.sender);
         demandoffers++;                                   //Running total of demand offers
-    }    
+        
+         
+     }    
         
     //****************************************************************
     // Non-critical users offer generation/price    
