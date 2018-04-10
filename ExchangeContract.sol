@@ -42,8 +42,8 @@ contract VoltExchange {
     //misc variables 
     int totalfunds = 0;              // Total ether added to the contract
     int totalEstUsage = 0;           // Total usage in wh from critical users
-    int demandoffers = 0;            // Total demand offers from noncritical users
-    int generationoffers = 0;        // Total generation offers from noncritical users
+    uint demandoffers = 0;            // Total demand offers from noncritical users
+    uint generationoffers = 0;        // Total generation offers from noncritical users
     int netOpWhLosses = 0;
     
     //****************************************************************
@@ -64,27 +64,31 @@ contract VoltExchange {
         return true;
     }
     
+    //****************************************************************
+    // IMPORTANT! To save computation and gas DemOffAddrs is appended without deletion.
+    //            The list of current sorted offers is indexed from its length minus the demandoffers.
     function sortDemoffers(address addr) private returns (bool success) {
-        address[] tempAddrs;
+        uint i;
         int placed = 0;
         if(demandoffers == 0){
             DemOffAddrs.push(addr);
         }
         else{
-            for(int i = 0; i < demandoffers; i++){
+            for(i = DemOffAddrs.length - demandoffers ; i < DemOffAddrs.length; i++){
                 if(offdemands[addr].price < offdemands[DemOffAddrs[i]].price && placed == 0){
                     placed = 1;
-                    tempAddrs.push(addr);
-                    tempAddrs.push(DemOffAddrs[i]);
+                    DemOffAddrs.push(addr);
+                    DemOffAddrs.push(DemOffAddrs[i]);
                 }
                 else{
-                    tempAddrs.push(DemOffAddrs[i]);
+                    DemOffAddrs.push(DemOffAddrs[i]);
                 }
             }
+            if(placed == 0){
+                DemOffAddrs.push(addr);
+            }
         }
-        
-        //replace DemOffAddrs with tempAddrs!!!!!!!
-        
+        return true;
     }
     
     //****************************************************************
@@ -93,6 +97,33 @@ contract VoltExchange {
         offgenerations[addr].addr = addr;
         offgenerations[addr].gen = generation;
         offgenerations[addr].price = price;
+        return true;
+    }
+    
+    //****************************************************************
+    // IMPORTANT! To save computation and gas GenOffAddrs is appended without deletion.
+    //            The list of current sorted offers is indexed from its length minus the generationoffers.
+    function sortGenoffers(address addr) private returns (bool success) {
+        uint i;
+        int placed = 0;
+        if(generationoffers == 0){
+            GenOffAddrs.push(addr);
+        }
+        else{
+            for(i = GenOffAddrs.length - generationoffers; i < GenOffAddrs.length; i++){
+                if(offgenerations[addr].price < offgenerations[GenOffAddrs[i]].price && placed == 0){
+                    placed = 1;
+                    GenOffAddrs.push(addr);
+                    GenOffAddrs.push(GenOffAddrs[i]);
+                }
+                else{
+                    GenOffAddrs.push(GenOffAddrs[i]);
+                }
+            }
+            if(placed == 0){
+                GenOffAddrs.push(addr);
+            }
+        }
         return true;
     }
     
@@ -161,20 +192,17 @@ contract VoltExchange {
         addOffDem(msg.sender,demand,price);               //Struct created for demand offers
         sortDemoffers(msg.sender);
         demandoffers++;                                   //Running total of demand offers
-        
-         
      }    
         
     //****************************************************************
     // Non-critical users offer generation/price    
-    function offerGeneration(int generation, int price) public returns (int){
+    function offerGeneration(int generation, int price) public{
         if(isCritical(msg.sender)){
             revert();
         }
         addOffGen(msg.sender,generation,price);           //Struct created for generation offers
-        GenOffAddrs.push(msg.sender);                     //Array to hold open genreation offers    
+        sortGenoffers(msg.sender);                     //Array to hold open genreation offers    
         generationoffers++;                               //Running total of demand offers
-        return offgenerations[msg.sender].price;
     }    
     
     function recieveLossesEst(int losses) public {
