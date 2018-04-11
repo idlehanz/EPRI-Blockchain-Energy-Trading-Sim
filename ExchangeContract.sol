@@ -38,6 +38,9 @@ contract VoltExchange {
     address[] private DemOffAddrs;
     address[] private GenOffAddrs;
     
+    address[] private AcceptedDemOff;
+    address[] private AcceptedGenOff;
+    
     //****************************************************************
     //misc variables 
     int totalfunds = 0;              // Total ether added to the contract
@@ -45,6 +48,8 @@ contract VoltExchange {
     uint demandoffers = 0;            // Total demand offers from noncritical users
     uint generationoffers = 0;        // Total generation offers from noncritical users
     int netOpWhLosses = 0;
+    int netUsage = 0;
+    int MarketPrice = 0;
     
     //****************************************************************
     // Creates new Customer object, default noncritical 
@@ -170,17 +175,16 @@ contract VoltExchange {
     //****************************************************************
     
     //****************************************************************
-    // Critical users submit estimated usage
-    function estUsage(int usage) public returns (int){
+    // Critical users submit estimated demand or generation, the difference between the two being overall usage.
+    function estUsage(int Wh) public {
         if(isCustomer(msg.sender) == false){              //If they are not a customer they have no balance and can not submit usage
             revert();                                     //Revert to save the cost of gas
         }
         if(!isCritical(msg.sender)){                      //If they are not a current critical user they are updated to one.
-            updateCrit(msg.sender);                       //This can not be undone and may need to be changed to ask users in the fallback function
+            updateCrit(msg.sender);                       //This can not be undone and may need to be changed to ask users in another function
         }
-        EstUsageWh[msg.sender] = usage;                   //Usage is mapped to customer but not set in static struct because this is subject to change I believe
-        totalEstUsage += usage;                           //Total usage is kept tract of for now
-        return totalEstUsage;
+        EstUsageWh[msg.sender] = Wh;                   //A postive Wh is a demand and a negative Wh is a generation from critical user.
+        totalEstUsage += Wh;                           //Total usage is kept tract of for now
     } 
     
     //****************************************************************
@@ -205,34 +209,62 @@ contract VoltExchange {
         generationoffers++;                               //Running total of demand offers
     }    
     
-    function recieveLossesEst(int losses) public {
+    //****************************************************************
+    // Network operator uses this function to input Losses.
+    function recieveLossesEst(int losses) private {
         netOpWhLosses = losses;
+        netUsage = totalEstUsage + netOpWhLosses;
     }
     
+    //****************************************************************
+    // Function to send Network Operator usage imbalance.
+    //function sendUsageImbalance() private returns (int imbal){
+    //    return netUsage;
+    //}
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+    //****************************************************************
+    // Function to balance out the excess demand/generation and set market price for critical users.
+    function defineMarketPrice() public {
+        int acceptGenTotal = 0;
+        int genPrice = 0;
+        int acceptDemTotal = 0;
+        int demPrice = 0;
+        
+        //Excess Demand, accept generation offers.
+        if(netUsage > 0) {
+            while(netUsage > 0 && generationoffers > 0){
+                if((offgenerations[GenOffAddrs[GenOffAddrs.length - generationoffers]].gen + acceptGenTotal) <= netUsage){
+                    AcceptedGenOff.push(GenOffAddrs[GenOffAddrs.length - generationoffers]);
+                    acceptGenTotal += offgenerations[GenOffAddrs[GenOffAddrs.length - generationoffers]].gen;
+                     //Assuming the price is per Wh. It could be the total price for all Wh as well.
+                    genPrice += offgenerations[GenOffAddrs[GenOffAddrs.length - generationoffers]].gen * offgenerations[GenOffAddrs[GenOffAddrs.length - generationoffers]].price;    
+                    generationoffers--;
+                    netUsage -= offgenerations[GenOffAddrs[GenOffAddrs.length - generationoffers]].gen;
+                }
+            }
+        }
+        
+        //Excess Generation, accept demand offers.
+        else {
+            while(netUsage < 0 && demandoffers > 0){
+                if((offdemands[DemOffAddrs[DemOffAddrs.length - demandoffers]].dem + acceptDemTotal) <= (netUsage * -1)){
+                    AcceptedDemOff.push(DemOffAddrs[DemOffAddrs.length - demandoffers]);
+                    acceptDemTotal += offdemands[DemOffAddrs[DemOffAddrs.length - demandoffers]].dem;
+                    //Assuming the price is per Wh. It could be the total price for all Wh as well.
+                    demPrice += offdemands[DemOffAddrs[DemOffAddrs.length - demandoffers]].dem * offdemands[DemOffAddrs[DemOffAddrs.length - demandoffers]].price;
+                    demandoffers--;
+                    netUsage += offdemands[DemOffAddrs[DemOffAddrs.length - demandoffers]].dem;
+                }
+            }
+        }
+        
+        //sendUsageImbalance();               // Here when it is needed.
+         
+        //IMPORTANT!!
+        //Depending on how the price is defined this calculation will need to be changed as needed. As for now I am calcuationg Sum of the price in Ether and Sum of the electricity in Wh.
+        MarketPrice = (genPrice + demPrice) / (acceptGenTotal + acceptDemTotal);
+    }
+
     //****************************************************************
     // Process for settlement phase
     //****************************************************************
