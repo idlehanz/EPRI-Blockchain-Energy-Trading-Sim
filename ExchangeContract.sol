@@ -8,6 +8,8 @@ contract VoltExchange {
         int customerBalance;
         bool userStatus; // true for critical, false for noncritical
         bool isCust;
+        int usageDiff;
+        uint historic;    // Value between 0 and 1. This would need to be someone from outside this contract so I just left it at 1.
     }
     
     //****************************************************************
@@ -29,9 +31,13 @@ contract VoltExchange {
     //****************************************************************
     // Mappings
     mapping(address => Customer) private customers;
+    
     mapping(address => int) private EstUsageWh;
+    mapping(address => int) private ActUsageWh;
+    
     mapping(address => OffDem) private offdemands;
     mapping(address => OffGen) private offgenerations;
+    
     
     //****************************************************************
     // Arrays
@@ -41,15 +47,23 @@ contract VoltExchange {
     address[] private AcceptedDemOff;
     address[] private AcceptedGenOff;
     
+    address[] private CriticalUsers;
+    address[] private RewardAccounts;
+    address[] private PenaltyAccounts;
+    
     //****************************************************************
     //misc variables 
     int totalfunds = 0;              // Total ether added to the contract
     int totalEstUsage = 0;           // Total usage in wh from critical users
+    int totalActUsage = 0;
     uint demandoffers = 0;            // Total demand offers from noncritical users
     uint generationoffers = 0;        // Total generation offers from noncritical users
     int netOpWhLosses = 0;
     int netUsage = 0;
     int MarketPrice = 0;
+    int UseCharge = 0;
+    
+    int genORdem;                     //Simple int to check if excess demand (0) or excess generation (1)
     
     //****************************************************************
     // Creates new Customer object, default noncritical 
@@ -57,6 +71,8 @@ contract VoltExchange {
         customers[addr].customerBalance = bal;    
         customers[addr].userStatus = false;
         customers[addr].isCust = true;
+        customers[addr].usageDiff = 0;
+        customers[addr].historic = 1;
         return true;
     }
     
@@ -136,6 +152,7 @@ contract VoltExchange {
     // Updates the status of customer to Critical ****NONE REVERSABLE
     function updateCrit(address addr) private {
         customers[addr].userStatus = true;
+        CriticalUsers.push(addr);
     }
     
     //****************************************************************
@@ -232,12 +249,13 @@ contract VoltExchange {
         
         //Excess Demand, accept generation offers.
         if(netUsage > 0) {
+            genORdem = 0;
             while(netUsage > 0 && generationoffers > 0){
                 if((offgenerations[GenOffAddrs[GenOffAddrs.length - generationoffers]].gen + acceptGenTotal) <= netUsage){
                     AcceptedGenOff.push(GenOffAddrs[GenOffAddrs.length - generationoffers]);
                     acceptGenTotal += offgenerations[GenOffAddrs[GenOffAddrs.length - generationoffers]].gen;
                      //Assuming the price is per Wh. It could be the total price for all Wh as well.
-                    genPrice += offgenerations[GenOffAddrs[GenOffAddrs.length - generationoffers]].gen * offgenerations[GenOffAddrs[GenOffAddrs.length - generationoffers]].price;    
+                    genPrice += int(offgenerations[GenOffAddrs[GenOffAddrs.length - generationoffers]].gen) * int(offgenerations[GenOffAddrs[GenOffAddrs.length - generationoffers]].price);    
                     generationoffers--;
                     netUsage -= offgenerations[GenOffAddrs[GenOffAddrs.length - generationoffers]].gen;
                 }
@@ -246,6 +264,7 @@ contract VoltExchange {
         
         //Excess Generation, accept demand offers.
         else {
+            genORdem = 1;
             while(netUsage < 0 && demandoffers > 0){
                 if((offdemands[DemOffAddrs[DemOffAddrs.length - demandoffers]].dem + acceptDemTotal) <= (netUsage * -1)){
                     AcceptedDemOff.push(DemOffAddrs[DemOffAddrs.length - demandoffers]);
@@ -268,4 +287,84 @@ contract VoltExchange {
     //****************************************************************
     // Process for settlement phase
     //****************************************************************
+
+    //****************************************************************
+    //Function to gather actual usage.
+    function actUsage(int Wh) public {
+        ActUsageWh[msg.sender] = Wh;                   //A postive Wh is a demand and a negative Wh is a generation from all users.
+        totalActUsage += Wh;                           //Total usage is kept tract of for now
+    }
+    
+    //****************************************************************
+    //Function to calculate usage difference between estimated and actual usage.
+    function calcDiffUsage() private {
+        totalActUsage += netOpWhLosses;
+        
+        for(uint i = 0; i < CriticalUsers.length; i++){
+            customers[CriticalUsers[i]].usageDiff = ActUsageWh[CriticalUsers[i]] - EstUsageWh[CriticalUsers[i]];
+            if(customers[CriticalUsers[i]].usageDiff > 0){
+                PenaltyAccounts.push(CriticalUsers[i]);
+            }
+            else{
+                RewardAccounts.push(CriticalUsers[i]);
+            }
+        }
+    }
+    
+    //****************************************************************
+    //Function for the Network Operator to set Use of System Charge.
+    function  setUseCharge(int amount) public{    
+        UseCharge = amount;    
+    } 
+    
+    //****************************************************************
+    //Function to calculate reward/penalty.
+    function rewardPenalty() private {
+        uint i;
+        
+        int reward;
+        int penalty;
+        
+        int totalReward;
+        
+        int rwdamt;
+        int penamt;
+        reward = MarketPrice * (totalEstUsage / (totalActUsage + totalEstUsage));
+        
+        for(i = 0; i < RewardAccounts.length; i++) {
+            rwdamt = reward * customers[RewardAccounts[i]].usageDiff;
+            if(rwdamt < 0){
+                rwdamt = rwdamt * -1;
+            }
+            totalReward += rwdamt;
+            
+            customers[RewardAccounts[i]].customerBalance -= (MarketPrice * ActUsageWh[RewardAccounts[i]]) - UseCharge + rwdamt;
+        }
+        
+        penalty = totalReward / (totalEstUsage + totalActUsage);
+        
+        for(i = 0; i < PenaltyAccounts.length; i++) {
+            penamt = penalty * customers[RewardAccounts[i]].usageDiff;
+            if(penamt < 0){
+                penamt = penamt * -1;
+            }
+            
+            customers[PenaltyAccounts[i]].customerBalance -= (MarketPrice * ActUsageWh[RewardAccounts[i]]) - UseCharge - penamt;
+        }
+        
+        if(genORdem == 1){
+            for(i = 0; i < AcceptedGenOff.length; i++){
+                customers[AcceptedGenOff[i]].customerBalance += (MarketPrice * ActUsageWh[AcceptedGenOff[i]]) - UseCharge;
+            }
+        }
+        else{
+            for(i = 0; i < AcceptedDemOff.length; i++){
+                customers[AcceptedDemOff[i]].customerBalance -= (MarketPrice * ActUsageWh[AcceptedDemOff[i]]) + UseCharge; 
+            }
+        }
+    }
+    
+    function finalize(){
+        
+    }
 } 
