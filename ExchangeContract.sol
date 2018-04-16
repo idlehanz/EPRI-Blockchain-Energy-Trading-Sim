@@ -5,7 +5,7 @@ contract VoltExchange {
     //****************************************************************
     // Customer Info Struct *** Mostly Static
     struct Customer {
-        int customerBalance;
+        uint customerBalance;
         bool userStatus; // true for critical, false for noncritical
         bool isCust;
         int usageDiff;
@@ -41,6 +41,8 @@ contract VoltExchange {
     
     //****************************************************************
     // Arrays
+    address[] private Customers;
+    
     address[] private DemOffAddrs;
     address[] private GenOffAddrs;
     
@@ -48,12 +50,13 @@ contract VoltExchange {
     address[] private AcceptedGenOff;
     
     address[] private CriticalUsers;
+    
     address[] private RewardAccounts;
     address[] private PenaltyAccounts;
     
     //****************************************************************
     //misc variables 
-    int totalfunds = 0;              // Total ether added to the contract
+    uint totalfunds = 0;              // Total ether added to the contract
     int totalEstUsage = 0;           // Total usage in wh from critical users
     int totalActUsage = 0;
     uint demandoffers = 0;            // Total demand offers from noncritical users
@@ -67,12 +70,13 @@ contract VoltExchange {
     
     //****************************************************************
     // Creates new Customer object, default noncritical 
-    function addCustomer(address addr, int bal) private returns (bool success){     
+    function addCustomer(address addr, uint bal) private returns (bool success){     
         customers[addr].customerBalance = bal;    
         customers[addr].userStatus = false;
         customers[addr].isCust = true;
         customers[addr].usageDiff = 0;
         customers[addr].historic = 1;
+        Customers.push(addr);
         return true;
     }
     
@@ -164,12 +168,17 @@ contract VoltExchange {
     //****************************************************************
     // Check to see if customer exists
     function isCustomer(address addr) private constant returns (bool customer){
-        return customers[addr].isCust;
+        if(customers[addr].isCust){
+            return true;
+        }
+        else{
+            return false;
+        }
     }
     
     //****************************************************************
     // Test to see check customer balance
-    function getBalance(address addr) public constant returns (int bal){
+    function getBalance(address addr) public constant returns (uint bal){
         return customers[addr].customerBalance;
     }
     
@@ -177,7 +186,7 @@ contract VoltExchange {
     //****************************************************************
     // Deposit function
     function depositETH() public payable {                //Changed to deposit function from fallback
-        int addedfunds = int(msg.value);
+        uint addedfunds = uint(msg.value);
         if(!isCustomer(msg.sender)){                      //If the sender is not a custmer they get added to customers
             addCustomer(msg.sender,addedfunds);           //along with their funds submitted
         }
@@ -338,7 +347,7 @@ contract VoltExchange {
             }
             totalReward += rwdamt;
             
-            customers[RewardAccounts[i]].customerBalance -= (MarketPrice * ActUsageWh[RewardAccounts[i]]) - UseCharge + rwdamt;
+            customers[RewardAccounts[i]].customerBalance -= uint((MarketPrice * ActUsageWh[RewardAccounts[i]]) - UseCharge + rwdamt);
         }
         
         penalty = totalReward / (totalEstUsage + totalActUsage);
@@ -349,22 +358,28 @@ contract VoltExchange {
                 penamt = penamt * -1;
             }
             
-            customers[PenaltyAccounts[i]].customerBalance -= (MarketPrice * ActUsageWh[RewardAccounts[i]]) - UseCharge - penamt;
+            customers[PenaltyAccounts[i]].customerBalance -= uint((MarketPrice * ActUsageWh[RewardAccounts[i]]) - UseCharge - penamt);
         }
         
         if(genORdem == 1){
             for(i = 0; i < AcceptedGenOff.length; i++){
-                customers[AcceptedGenOff[i]].customerBalance += (MarketPrice * ActUsageWh[AcceptedGenOff[i]]) - UseCharge;
+                customers[AcceptedGenOff[i]].customerBalance += uint((MarketPrice * ActUsageWh[AcceptedGenOff[i]]) - UseCharge);
             }
         }
         else{
             for(i = 0; i < AcceptedDemOff.length; i++){
-                customers[AcceptedDemOff[i]].customerBalance -= (MarketPrice * ActUsageWh[AcceptedDemOff[i]]) + UseCharge; 
+                customers[AcceptedDemOff[i]].customerBalance -= uint((MarketPrice * ActUsageWh[AcceptedDemOff[i]]) + UseCharge); 
             }
         }
     }
     
-    function finalize(){
+    function settle() public{
+        uint i;
+        calcDiffUsage();
+        rewardPenalty();
+        for(i = 0; i < Customers.length; i++){
+            Customers[i].transfer(customers[Customers[i]].customerBalance);
+        }
         
     }
-} 
+}
