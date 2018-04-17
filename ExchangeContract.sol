@@ -181,6 +181,12 @@ contract VoltExchange {
     function getBalance(address addr) public constant returns (uint bal){
         return customers[addr].customerBalance;
     }
+    //****************************************************************
+    // Test to see check Market Price
+    function getMP() public constant returns (int bal){
+        return netUsage;
+    }
+    
     
     //CUSTOMER FUNCTIONS
     //****************************************************************
@@ -236,8 +242,8 @@ contract VoltExchange {
     }    
     
     //****************************************************************
-    // Network operator uses this function to input Losses.
-    function recieveLossesEst(int losses) private {
+    // Network operator uses this function to input Losses.                          //NEED TO MAKE ONLY OWNER 
+    function recieveLossesEst(int losses) public {
         netOpWhLosses = losses;
         netUsage = totalEstUsage + netOpWhLosses;
     }
@@ -250,7 +256,7 @@ contract VoltExchange {
     
     //****************************************************************
     // Function to balance out the excess demand/generation and set market price for critical users.
-    function defineMarketPrice() public {
+    function defineMarketPrice() public {                                                              //ONLY OWNER
         int acceptGenTotal = 0;
         int genPrice = 0;
         int acceptDemTotal = 0;
@@ -322,7 +328,7 @@ contract VoltExchange {
     
     //****************************************************************
     //Function for the Network Operator to set Use of System Charge.
-    function  setUseCharge(int amount) public{    
+    function  setUseCharge(int amount) public{                                                          //ONLY OWNER
         UseCharge = amount;    
     } 
     
@@ -373,7 +379,7 @@ contract VoltExchange {
         }
     }
     
-    function settle() public{
+    function settle() public{                                                       //ONLY OWNER
         uint i;
         calcDiffUsage();
         rewardPenalty();
@@ -382,4 +388,4 @@ contract VoltExchange {
         }
         
     }
-}
+} 
