@@ -82,24 +82,24 @@ contract VoltExchange {
     
     //****************************************************************
     // Creates new Offered Demand object
-    function addOffDem(address addr, int demand, int price) private returns (bool success){
+    function addOffDem(address addr, int demand, int price) private{
         offdemands[addr].addr = addr;
         offdemands[addr].dem = demand;
         offdemands[addr].price = price;
-        return true;
     }
     
     //****************************************************************
     // IMPORTANT! To save computation and gas DemOffAddrs is appended without deletion.
     //            The list of current sorted offers is indexed from its length minus the demandoffers.
-    function sortDemoffers(address addr) private returns (bool success) {
+    function sortDemoffers(address addr) private{
         uint i;
+        uint len = DemOffAddrs.length;
         int placed = 0;
         if(demandoffers == 0){
             DemOffAddrs.push(addr);
         }
         else{
-            for(i = DemOffAddrs.length - demandoffers ; i < DemOffAddrs.length; i++){
+            for(i = len - demandoffers ; i < len; i++){
                 if(offdemands[addr].price < offdemands[DemOffAddrs[i]].price && placed == 0){
                     placed = 1;
                     DemOffAddrs.push(addr);
@@ -113,29 +113,28 @@ contract VoltExchange {
                 DemOffAddrs.push(addr);
             }
         }
-        return true;
     }
     
     //****************************************************************
     // Creates new Offered Generation object
-    function addOffGen(address addr, int generation, int price) private returns (bool success){
+    function addOffGen(address addr, int generation, int price) private{
         offgenerations[addr].addr = addr;
         offgenerations[addr].gen = generation;
         offgenerations[addr].price = price;
-        return true;
     }
     
     //****************************************************************
     // IMPORTANT! To save computation and gas GenOffAddrs is appended without deletion.
     //            The list of current sorted offers is indexed from its length minus the generationoffers.
-    function sortGenoffers(address addr) private returns (bool success) {
+    function sortGenoffers(address addr) private{
         uint i;
+        uint len = GenOffAddrs.length;
         int placed = 0;
         if(generationoffers == 0){
             GenOffAddrs.push(addr);
         }
         else{
-            for(i = GenOffAddrs.length - generationoffers; i < GenOffAddrs.length; i++){
+            for(i = len - generationoffers; i < len; i++){
                 if(offgenerations[addr].price < offgenerations[GenOffAddrs[i]].price && placed == 0){
                     placed = 1;
                     GenOffAddrs.push(addr);
@@ -149,7 +148,6 @@ contract VoltExchange {
                 GenOffAddrs.push(addr);
             }
         }
-        return true;
     }
     
     //****************************************************************
@@ -184,7 +182,7 @@ contract VoltExchange {
     //****************************************************************
     // Test to see check Market Price
     function getMP() public constant returns (int bal){
-        return netUsage;
+        return MarketPrice;
     }
     
     
@@ -228,6 +226,7 @@ contract VoltExchange {
         addOffDem(msg.sender,demand,price);               //Struct created for demand offers
         sortDemoffers(msg.sender);
         demandoffers++;                                   //Running total of demand offers
+     
      }    
         
     //****************************************************************
@@ -256,23 +255,23 @@ contract VoltExchange {
     
     //****************************************************************
     // Function to balance out the excess demand/generation and set market price for critical users.
-    function defineMarketPrice() public {                                                              //ONLY OWNER
+    function defineMarketPrice() public{                                                              //ONLY OWNER
         int acceptGenTotal = 0;
         int genPrice = 0;
         int acceptDemTotal = 0;
         int demPrice = 0;
-        
+
         //Excess Demand, accept generation offers.
         if(netUsage > 0) {
             genORdem = 0;
             while(netUsage > 0 && generationoffers > 0){
                 if((offgenerations[GenOffAddrs[GenOffAddrs.length - generationoffers]].gen + acceptGenTotal) <= netUsage){
-                    AcceptedGenOff.push(GenOffAddrs[GenOffAddrs.length - generationoffers]);
+                    //AcceptedGenOff.push(GenOffAddrs[GenOffAddrs.length - generationoffers]);
                     acceptGenTotal += offgenerations[GenOffAddrs[GenOffAddrs.length - generationoffers]].gen;
                      //Assuming the price is per Wh. It could be the total price for all Wh as well.
                     genPrice += int(offgenerations[GenOffAddrs[GenOffAddrs.length - generationoffers]].gen) * int(offgenerations[GenOffAddrs[GenOffAddrs.length - generationoffers]].price);    
-                    generationoffers--;
                     netUsage -= offgenerations[GenOffAddrs[GenOffAddrs.length - generationoffers]].gen;
+                    generationoffers--;
                 }
             }
         }
@@ -286,17 +285,18 @@ contract VoltExchange {
                     acceptDemTotal += offdemands[DemOffAddrs[DemOffAddrs.length - demandoffers]].dem;
                     //Assuming the price is per Wh. It could be the total price for all Wh as well.
                     demPrice += offdemands[DemOffAddrs[DemOffAddrs.length - demandoffers]].dem * offdemands[DemOffAddrs[DemOffAddrs.length - demandoffers]].price;
-                    demandoffers--;
                     netUsage += offdemands[DemOffAddrs[DemOffAddrs.length - demandoffers]].dem;
+                    demandoffers--;
                 }
             }
         }
         
         //sendUsageImbalance();               // Here when it is needed.
-         
+        
         //IMPORTANT!!
         //Depending on how the price is defined this calculation will need to be changed as needed. As for now I am calcuationg Sum of the price in Ether and Sum of the electricity in Wh.
         MarketPrice = (genPrice + demPrice) / (acceptGenTotal + acceptDemTotal);
+
     }
 
     //****************************************************************
