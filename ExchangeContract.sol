@@ -76,7 +76,6 @@ contract VoltExchange {
         customers[addr].isCust = true;
         customers[addr].usageDiff = 0;
         customers[addr].historic = 1;
-        Customers.push(addr);
         return true;
     }
     
@@ -181,8 +180,8 @@ contract VoltExchange {
     }
     //****************************************************************
     // Test to see check Market Price
-    function getMP() public constant returns (int bal){
-        return MarketPrice;
+    function getMP() public constant returns (uint bal){
+        return RewardAccounts.length;
     }
     
     
@@ -193,6 +192,7 @@ contract VoltExchange {
         uint addedfunds = uint(msg.value);
         if(!isCustomer(msg.sender)){                      //If the sender is not a custmer they get added to customers
             addCustomer(msg.sender,addedfunds);           //along with their funds submitted
+            Customers.push(msg.sender);
         }
         else{
             customers[msg.sender].customerBalance += addedfunds;   //If sender is customer the balance gets added to their current balance
@@ -263,10 +263,10 @@ contract VoltExchange {
 
         //Excess Demand, accept generation offers.
         if(netUsage > 0) {
-            genORdem = 0;
+            genORdem = 1;
             while(netUsage > 0 && generationoffers > 0){
                 if((offgenerations[GenOffAddrs[GenOffAddrs.length - generationoffers]].gen + acceptGenTotal) <= netUsage){
-                    //AcceptedGenOff.push(GenOffAddrs[GenOffAddrs.length - generationoffers]);
+                    AcceptedGenOff.push(GenOffAddrs[GenOffAddrs.length - generationoffers]);
                     acceptGenTotal += offgenerations[GenOffAddrs[GenOffAddrs.length - generationoffers]].gen;
                      //Assuming the price is per Wh. It could be the total price for all Wh as well.
                     genPrice += int(offgenerations[GenOffAddrs[GenOffAddrs.length - generationoffers]].gen) * int(offgenerations[GenOffAddrs[GenOffAddrs.length - generationoffers]].price);    
@@ -278,7 +278,7 @@ contract VoltExchange {
         
         //Excess Generation, accept demand offers.
         else {
-            genORdem = 1;
+            genORdem = 0;
             while(netUsage < 0 && demandoffers > 0){
                 if((offdemands[DemOffAddrs[DemOffAddrs.length - demandoffers]].dem + acceptDemTotal) <= (netUsage * -1)){
                     AcceptedDemOff.push(DemOffAddrs[DemOffAddrs.length - demandoffers]);
@@ -336,6 +336,7 @@ contract VoltExchange {
     //Function to calculate reward/penalty.
     function rewardPenalty() private {
         uint i;
+        int payment;
         
         int reward;
         int penalty;
@@ -347,34 +348,53 @@ contract VoltExchange {
         reward = MarketPrice * (totalEstUsage / (totalActUsage + totalEstUsage));
         
         for(i = 0; i < RewardAccounts.length; i++) {
+            payment = 0;
             rwdamt = reward * customers[RewardAccounts[i]].usageDiff;
             if(rwdamt < 0){
                 rwdamt = rwdamt * -1;
             }
             totalReward += rwdamt;
             
-            customers[RewardAccounts[i]].customerBalance -= uint((MarketPrice * ActUsageWh[RewardAccounts[i]]) - UseCharge + rwdamt);
+            payment = MarketPrice * ActUsageWh[RewardAccounts[i]];
+            if(payment < 0){
+                payment = payment * -1;
+            }
+        
+            customers[RewardAccounts[i]].customerBalance -= uint((payment + UseCharge - rwdamt));
         }
         
         penalty = totalReward / (totalEstUsage + totalActUsage);
         
         for(i = 0; i < PenaltyAccounts.length; i++) {
+            payment = 0;
             penamt = penalty * customers[RewardAccounts[i]].usageDiff;
             if(penamt < 0){
                 penamt = penamt * -1;
             }
+            payment = MarketPrice * ActUsageWh[PenaltyAccounts[i]];
+            if(payment < 0){
+                payment = payment * -1;
+            }
             
-            customers[PenaltyAccounts[i]].customerBalance -= uint((MarketPrice * ActUsageWh[RewardAccounts[i]]) - UseCharge - penamt);
+            customers[PenaltyAccounts[i]].customerBalance -= uint((payment + UseCharge + penamt));
         }
         
         if(genORdem == 1){
             for(i = 0; i < AcceptedGenOff.length; i++){
-                customers[AcceptedGenOff[i]].customerBalance += uint((MarketPrice * ActUsageWh[AcceptedGenOff[i]]) - UseCharge);
+                payment = MarketPrice * ActUsageWh[AcceptedGenOff[i]];
+                if(payment < 0){
+                    payment = payment * -1;
+                }
+                customers[AcceptedGenOff[i]].customerBalance += uint(payment - UseCharge);
             }
         }
         else{
             for(i = 0; i < AcceptedDemOff.length; i++){
-                customers[AcceptedDemOff[i]].customerBalance -= uint((MarketPrice * ActUsageWh[AcceptedDemOff[i]]) + UseCharge); 
+                payment = MarketPrice * ActUsageWh[AcceptedDemOff[i]];
+                if(payment < 0){
+                    payment = payment * -1;
+                }
+                customers[AcceptedDemOff[i]].customerBalance -= uint(payment + UseCharge); 
             }
         }
     }
