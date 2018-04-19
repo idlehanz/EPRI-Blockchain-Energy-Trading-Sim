@@ -180,8 +180,8 @@ contract VoltExchange {
     }
     //****************************************************************
     // Test to see check Market Price
-    function getMP() public constant returns (int bal){
-        return MarketPrice;
+    function getMP() public constant returns (uint bal){
+        return generationoffers;
     }
     
     
@@ -306,11 +306,11 @@ contract VoltExchange {
     function defineMP() public{
         int usage = netUsage;
         
-        if(netUsage > 0 && generationoffers > 0){
+        if(usage > 0 && generationoffers > 0){
             posUsage(usage);
         }
         
-        else if(netUsage < 0 && demandoffers > 0){
+        else if(usage < 0 && demandoffers > 0){
             negUsage(usage * -1);
         }
     }
@@ -327,7 +327,6 @@ contract VoltExchange {
                     acceptGenTotal += offgenerations[GenOffAddrs[(GenOffAddrs.length - generationoffers) + i]].gen;
                     //Assuming the price is per Wh. It could be the total price for all Wh as well.
                     genPrice += int(offgenerations[GenOffAddrs[(GenOffAddrs.length - generationoffers) + i]].gen) * int(offgenerations[GenOffAddrs[(GenOffAddrs.length - generationoffers) + i]].price);    
-                    usage -= offgenerations[GenOffAddrs[(GenOffAddrs.length - generationoffers) + i]].gen;
                 }
                 else{
                     return getMP(genPrice,acceptGenTotal);
@@ -348,7 +347,6 @@ contract VoltExchange {
                     acceptDemTotal += offdemands[DemOffAddrs[(DemOffAddrs.length - demandoffers) + i]].dem;
                     //Assuming the price is per Wh. It could be the total price for all Wh as well.
                     demPrice += offdemands[DemOffAddrs[(DemOffAddrs.length - demandoffers) + i]].dem * offdemands[DemOffAddrs[(DemOffAddrs.length - demandoffers) + i]].price;
-                    usage -= offdemands[DemOffAddrs[(DemOffAddrs.length - demandoffers) + i]].dem;
                 }
                 else{
                     return getMP(demPrice,acceptDemTotal);
