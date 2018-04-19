@@ -201,7 +201,9 @@ contract VoltExchange {
     }
     
     //****************************************************************
+    //****************************************************************
     // Process for negotiation phase
+    //****************************************************************
     //****************************************************************
     
     //****************************************************************
@@ -299,17 +301,21 @@ contract VoltExchange {
 
     }*/
     
+    //****************************************************************
+    // Function to balance out the excess demand/generation and set market price for critical users.
     function defineMP() public{
         int usage = netUsage;
         
         if(netUsage > 0 && generationoffers > 0){
             posUsage(usage);
         }
-        else{
+        
+        else if(netUsage < 0 && demandoffers > 0){
             negUsage(usage * -1);
         }
     }
     
+    //****************************************************************
     function posUsage(int usage) private{
         int acceptGenTotal = 0;
         int genPrice = 0;
@@ -330,6 +336,7 @@ contract VoltExchange {
             return getMP(genPrice,acceptGenTotal);
     }
     
+    //****************************************************************
     function negUsage(int usage) private{
         int acceptDemTotal = 0;
         int demPrice = 0;
@@ -350,12 +357,14 @@ contract VoltExchange {
             return getMP(demPrice,acceptDemTotal);
     }
     
+    //****************************************************************
     function getMP(int price, int total) private {
         MarketPrice = price / total;
     }
-
+    //****************************************************************
     //****************************************************************
     // Process for settlement phase
+    //****************************************************************
     //****************************************************************
 
     //****************************************************************
@@ -393,13 +402,13 @@ contract VoltExchange {
         uint i;
         int payment;
         
-        int reward;
-        int penalty;
+        int reward = 0;
+        int penalty = 0;
         
-        int totalReward;
+        int totalReward = 0;
         
-        int rwdamt;
-        int penamt;
+        int rwdamt = 0;
+        int penamt = 0;
         reward = MarketPrice * (totalEstUsage / (totalActUsage + totalEstUsage));
         
         for(i = 0; i < RewardAccounts.length; i++) {
@@ -436,7 +445,7 @@ contract VoltExchange {
         
         if(genORdem == 1){
             for(i = 0; i < AcceptedGenOff.length; i++){
-                payment = MarketPrice * ActUsageWh[AcceptedGenOff[i]];
+                payment = offgenerations[AcceptedGenOff[i]].price * ActUsageWh[AcceptedGenOff[i]];
                 if(payment < 0){
                     payment = payment * -1;
                 }
@@ -445,7 +454,7 @@ contract VoltExchange {
         }
         else{
             for(i = 0; i < AcceptedDemOff.length; i++){
-                payment = MarketPrice * ActUsageWh[AcceptedDemOff[i]];
+                payment = offdemands[AcceptedDemOff[i]].price * ActUsageWh[AcceptedDemOff[i]];
                 if(payment < 0){
                     payment = payment * -1;
                 }
@@ -454,6 +463,7 @@ contract VoltExchange {
         }
     }
     
+    //****************************************************************
     function settle() public{                                                       //ONLY OWNER
         uint i;
         calcDiffUsage();
@@ -463,4 +473,11 @@ contract VoltExchange {
         }
         
     }
+    
+    //****************************************************************
+    //Kills the contract and returns all ether to address                           //ONLY OWNER
+    //IMPORTANT Very bad for real contract.  Further steps needed in future!!!!
+    function timeToDie(address addr) public{
+      selfdestruct(addr);
+  }
 } 
