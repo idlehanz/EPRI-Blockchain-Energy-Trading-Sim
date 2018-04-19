@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.19;
 
 contract VoltExchange {
     
@@ -180,8 +180,8 @@ contract VoltExchange {
     }
     //****************************************************************
     // Test to see check Market Price
-    function getMP() public constant returns (uint bal){
-        return RewardAccounts.length;
+    function getMP() public constant returns (int bal){
+        return MarketPrice;
     }
     
     
@@ -255,7 +255,7 @@ contract VoltExchange {
     
     //****************************************************************
     // Function to balance out the excess demand/generation and set market price for critical users.
-    function defineMarketPrice() public{                                                              //ONLY OWNER
+    /*function defineMarketPrice() public{                                                              //ONLY OWNER
         int acceptGenTotal = 0;
         int genPrice = 0;
         int acceptDemTotal = 0;
@@ -297,6 +297,61 @@ contract VoltExchange {
         //Depending on how the price is defined this calculation will need to be changed as needed. As for now I am calcuationg Sum of the price in Ether and Sum of the electricity in Wh.
         MarketPrice = (genPrice + demPrice) / (acceptGenTotal + acceptDemTotal);
 
+    }*/
+    
+    function defineMP() public{
+        int usage = netUsage;
+        
+        if(netUsage > 0 && generationoffers > 0){
+            posUsage(usage);
+        }
+        else{
+            negUsage(usage * -1);
+        }
+    }
+    
+    function posUsage(int usage) private{
+        int acceptGenTotal = 0;
+        int genPrice = 0;
+        uint i;
+        genORdem = 1;
+            for(i = 0; i < generationoffers; i++){
+                if((offgenerations[GenOffAddrs[(GenOffAddrs.length - generationoffers) + i]].gen + acceptGenTotal) <= usage){
+                    AcceptedGenOff.push(GenOffAddrs[(GenOffAddrs.length - generationoffers) + i]);
+                    acceptGenTotal += offgenerations[GenOffAddrs[(GenOffAddrs.length - generationoffers) + i]].gen;
+                    //Assuming the price is per Wh. It could be the total price for all Wh as well.
+                    genPrice += int(offgenerations[GenOffAddrs[(GenOffAddrs.length - generationoffers) + i]].gen) * int(offgenerations[GenOffAddrs[(GenOffAddrs.length - generationoffers) + i]].price);    
+                    usage -= offgenerations[GenOffAddrs[(GenOffAddrs.length - generationoffers) + i]].gen;
+                }
+                else{
+                    return getMP(genPrice,acceptGenTotal);
+                }
+            }
+            return getMP(genPrice,acceptGenTotal);
+    }
+    
+    function negUsage(int usage) private{
+        int acceptDemTotal = 0;
+        int demPrice = 0;
+        uint i;
+        genORdem = 0;
+            for(i = 0; i < demandoffers; i++){
+                if((offdemands[DemOffAddrs[(DemOffAddrs.length - demandoffers) + i]].dem + acceptDemTotal) <= usage){
+                    AcceptedDemOff.push(DemOffAddrs[(DemOffAddrs.length - demandoffers) + i]);
+                    acceptDemTotal += offdemands[DemOffAddrs[(DemOffAddrs.length - demandoffers) + i]].dem;
+                    //Assuming the price is per Wh. It could be the total price for all Wh as well.
+                    demPrice += offdemands[DemOffAddrs[(DemOffAddrs.length - demandoffers) + i]].dem * offdemands[DemOffAddrs[(DemOffAddrs.length - demandoffers) + i]].price;
+                    usage -= offdemands[DemOffAddrs[(DemOffAddrs.length - demandoffers) + i]].dem;
+                }
+                else{
+                    return getMP(demPrice,acceptDemTotal);
+                }
+            }
+            return getMP(demPrice,acceptDemTotal);
+    }
+    
+    function getMP(int price, int total) private {
+        MarketPrice = price / total;
     }
 
     //****************************************************************
