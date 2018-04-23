@@ -1,0 +1,35 @@
+Console 1:
+	ganache-cli -p 7545
+	//Or have a ganache gui running on a laptop.
+	//Set the settings to the local ip and change the
+	//truffle.js config file to reflect this ip as host.
+
+Console 2: 
+	//be in truffle project root dir
+	truffle migrate --reset
+	truffle console
+	VoltExchange.deployed().then(function(i) { app = i; })
+	var owner = web3.eth.accounts[0]
+	var account1 = web3.eth.accounts[1]
+	var account2 = web3.eth.accounts[2]
+	var account3 = web3.eth.accounts[3]
+	app.depositETH({from: account1, value: 10000000000000000000})
+	app.depositETH({from: account2, value: 1000000000000000000})
+	app.depositETH({from: account3, value: 1000000000000000000})
+	//When sending ether it must be in the form of wei
+	//to see a convertion you can use the truffle console
+	//web3.toWei(10,"ether")
+	//this displays '10000000000000000000' to the console
+	app.estUsage(1000000,{from: account1})
+	app.offerGeneration(420000,10000000000000,{from:account2})
+	app.offerGeneration(450000,9999999999999,{from:account3})
+	app.recieveLossesEst(200,{from:owner})
+	app.setUseCharge(20,{from:owner})
+	app.defineMP({from:owner})      //fixed
+	app.actUsage(999999,{from:account1})
+	app.actUsage(450000,{from:account2})
+	app.actUsage(420000,{from:account3})
+	app.settle({from:owner})
+	app.timeToDie(owner)
+
+
