@@ -1,5 +1,10 @@
 config:
+  # This will be checked before running.
+  # Set to 0 to run for any amount.
   min_nodes: 1
 calls:
-  - node: 0
+  # This will run on every node
+  - node: -1
     method: net_PeerCount
+  - node: 0
+    method: miner_start

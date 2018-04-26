@@ -67,8 +67,15 @@ def run_test(path):
     print("Starting test")
     for call in test["calls"]:
         node_id = call.pop("node", None)
-        result = nodes[node_id].send_rpc_call(call)
-        test_output.append(result)
+
+        if node_id == -1:
+            # This runs on every node
+            for node in nodes:
+                result = node.send_rpc_call(call)
+                test_output.append(result)
+        else:
+            result = nodes[node_id].send_rpc_call(call)
+            test_output.append(result)
     print("Test completed")
 
     return json.dumps(test_output, indent=4)
