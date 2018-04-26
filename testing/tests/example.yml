@@ -1,0 +1,5 @@
+config:
+  min_nodes: 1
+calls:
+  - node: 0
+    method: net_PeerCount
