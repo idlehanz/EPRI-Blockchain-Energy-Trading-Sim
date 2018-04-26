@@ -48,7 +48,7 @@ class Node:
         except:
             response = {"error": True}
 
-        return {"request": data, "response": response}
+        return {"request": data, "response": response, "url": self.url}
 
 def run_test(path):
     test = {}
@@ -56,6 +56,7 @@ def run_test(path):
         test = yaml.load(testfile)
 
     nodes = get_nodes()
+    test_output = []
 
     if len(nodes) < test["config"]["min_nodes"]:
         print("Not enough nodes (need {}, have {}). Try docker service scale"
@@ -67,10 +68,10 @@ def run_test(path):
     for call in test["calls"]:
         node_id = call.pop("node", None)
         result = nodes[node_id].send_rpc_call(call)
-        print(json.dumps(result, indent=4))
+        test_output.append(result)
     print("Test completed")
 
-    return json.dumps(result, indent=4)
+    return json.dumps(test_output, indent=4)
 
 app = Flask(__name__)
 
