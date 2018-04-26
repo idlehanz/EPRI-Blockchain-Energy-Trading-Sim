@@ -68,8 +68,9 @@ def run_test(path):
         node_id = call.pop("node", None)
         result = nodes[node_id].send_rpc_call(call)
         print(json.dumps(result, indent=4))
-
     print("Test completed")
+
+    return json.dumps(result, indent=4)
 
 app = Flask(__name__)
 
