@@ -1,0 +1,91 @@
+eth.accounts
+eth.accounts[0]
+eth.accounts
+eth.getBalance(accounts[0])
+eth.getBalance(eth.accounts[0])
+eth.accounts
+eth.getBalance(eth.accounts[0])
+miner.start()
+miner.start(1)
+miner.start()
+var contractAddress = "0x0dfc07d7be3ea9ec3b72187f38304dc922c6e9a1"
+contractAddress
+eth.accounts
+eth.getBalance(eth.accounts[0])
+eth.getBalance(eth.accounts[1])
+eth.getBalance(eth.accounts[3])
+miner.start(1)
+var contractadd = "0x0dfc07d7be3ea9ec3b72187f38304dc922c6e9a1"
+var abi = [{"constant":true,"inputs":[{"name":"addr","type":"address"}],"name":"getBalance","outputs":[{"name":"bal","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[],"name":"depositETH","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"constant":false,"inputs":[{"name":"Wh","type":"int256"}],"name":"estUsage","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"demand","type":"int256"},{"name":"price","type":"int256"}],"name":"offerDemand","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"generation","type":"int256"},{"name":"price","type":"int256"}],"name":"offerGeneration","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"losses","type":"int256"}],"name":"recieveLossesEst","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"defineMP","outputs":[],"payable":false,"stateMutability":"nonpayable",},{"constant":true,"inputs":[],"name":"getMP","outputs":[{"name":"bal","type":"int256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"Wh","type":"int256"}],"name":"actUsage","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"amount","type":"int256"}],"name":"setUseCharge","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"settle","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"addr","type":"address"}],"name":"timeToDie","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"}]
+var voltContract = web3.eth.contract(abi)
+var voltInstance = voltContract.at(contractadd)
+voltInstance
+var app = voltContract.at(contractadd)
+app
+var owner = web3.eth.accounts[0]
+var account1 = web3.eth.accounts[1]
+var account2 = web3.eth.accounts[2]
+var account3 = web3.eth.accounts[3]
+var account4 = web3.eth.accounts[4]
+var account5 = web3.eth.accounts[5]
+app.depositETH({from: account1, value: 10000000000000000000})
+app.depositETH({from: account2, value: 10000000000000000000})
+app.depositETH({from: account3, value: 1000000000000000000})
+app.depositETH({from: account4, value: 1000000000000000000})
+app.depositETH({from: account5, value: 1000000000000000000})
+app.estUsage(700000,{from: account1})
+app.estUsage(600000,{from: account2})
+app.offerGeneration(420000,10000000000000,{from:account3})
+app.offerGeneration(450000,9999999999990,{from:account4})
+app.offerGeneration(250000,11111111111110,{from:account5})
+app.recieveLossesEst(2000,{from:owner})
+app.defineMP({from:owner})
+app
+var abi = [{"constant":true,"inputs":[{"name":"addr","type":"address"}],"name":"getBalance","outputs":[{"name":"bal","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[],"name":"depositETH","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"constant":false,"inputs":[{"name":"Wh","type":"int256"}],"name":"estUsage","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"demand","type":"int256"},{"name":"price","type":"int256"}],"name":"offerDemand","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"generation","type":"int256"},{"name":"price","type":"int256"}],"name":"offerGeneration","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"losses","type":"int256"}],"name":"recieveLossesEst","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"defineMP","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"getMP","outputs":[{"name":"bal","type":"int256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"Wh","type":"int256"}],"name":"actUsage","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"amount","type":"int256"}],"name":"setUseCharge","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"settle","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"addr","type":"address"}],"name":"timeToDie","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"}]
+var voltContract = web3.eth.contract(abi)
+var app = voltContract.at(contractadd)
+app
+app.defineMP({from:owner})
+app.getMP
+app.actUsage(710000,{from:account1})
+app.actUsage(599999,{from:account2})
+app.actUsage(450000,{from:account3})
+app.actUsage(420000,{from:account4})
+app.actUsage(200000,{from:account5})
+app.settle({from:owner})
+app.timeToDie(owner)
+app
+app.timeToDie(owner,{from:owner})
+eth.getBalance(eth.accounts[0])
+eth.getBalance(eth.accounts[1])
+eth.getBalance(eth.accounts[2])
+eth.getBalance(eth.accounts[3])
+eth.getBalance(eth.accounts[5])
+eth.getBalance(eth.accounts[6])
+app.getBalance(eth.accounts[6])
+app
+app.getMP()
+app.define({from:owner})
+app.defineMP({from:owner})
+miner.start(1)
+var contractAdd = ("0x0dfc07d7be3ea9ec3b72187f38304dc922c6e9a1")
+var contractabi = [{"constant":true,"inputs":[{"name":"addr","type":"address"}],"name":"getBalance","outputs":[{"name":"bal","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[],"name":"depositETH","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"constant":false,"inputs":[{"name":"Wh","type":"int256"}],"name":"estUsage","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"demand","type":"int256"},{"name":"price","type":"int256"}],"name":"offerDemand","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"generation","type":"int256"},{"name":"price","type":"int256"}],"name":"offerGeneration","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"losses","type":"int256"}],"name":"recieveLossesEst","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"defineMP","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"getMP","outputs":[{"name":"bal","type":"int256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"Wh","type":"int256"}],"name":"actUsage","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"amount","type":"int256"}],"name":"setUseCharge","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"settle","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"addr","type":"address"}],"name":"timeToDie","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"}]
+var app = voltContract.at(contractAdd)
+var voltContract = web3.eth.contract(contractabi)
+var app = voltContract.at(contractadd)
+var app = voltContract.at(contractAdd)
+app
+var owner = web3.eth.accounts[0]
+eth.getBalance(owner)
+eth.getBalance(account1)
+app.depositETH({from: account1, value: 10000000000000000000})
+app.estUsage(700000,{from: account1})
+eth.getBalance(account1)
+eth.getBalance(account5)
+app
+app.depositETH({from: account1, value: 10000000000000000000000})
+eth.getBalance(account1)
+app.depositETH
+app.depositETH()
+app.depositETH({from: account1, value: 10000000000000000000000})
+eth.getBalance(account1)

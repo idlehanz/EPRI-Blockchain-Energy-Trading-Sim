@@ -1,0 +1,74 @@
+account0 password = 1fefe00ec80d99ea8f36cec77617c63bf4ebf6af
+account0 addr = 0x43812ca87d1d5196ad1b33382d9c7597a30f21da
+
+account1 password = rasp2
+account1 addr =0x5b0a03ddc21e4510825963efddfa1cfcf62c13e9
+
+account2 password = rasp3
+account2 addr = 0x65a1d9835a32d6701ddf7825cb3983696aaa9471
+
+account3 password = rasp4
+account3 addr = 0x323c73bb35659395ce7b2e8cbce612983527fa35
+
+account4 password = rasp5
+account4 addr = 0x339905c6a7baa9aba6bc82e348f41db3dea405e0
+
+account5 password = rasp6
+account5 addr = 0xedfe2368da84db0d7f79e099586e8ba93f5b4c4e
+
+console1:--------------------------------------------------------------------------------------------------------
+geth removedb --datadir ./blockdata
+
+geth --datadir ./blockdata init ./voltchain.json
+
+geth --datadir ./blockdata --rpc --networkid 1985 console 2>> myEth.log
+/////console2
+
+ personal.unlockAccount(eth.accounts[0],"1fefe00ec80d99ea8f36cec77617c63bf4ebf6af", 99999)
+ personal.unlockAccount(eth.accounts[1],"rasp2", 99999)
+ personal.unlockAccount(eth.accounts[2],"rasp3", 99999)
+ personal.unlockAccount(eth.accounts[3],"rasp4", 99999)
+ personal.unlockAccount(eth.accounts[4],"rasp5", 99999)
+ personal.unlockAccount(eth.accounts[5],"rasp6", 99999)
+ miner.start(1)
+/////console3
+ var contractadd = "(SEE BELOW FOR THIS INFO)"
+ var contractabi = [{"constant":true,"inputs":[{"name":"addr","type":"address"}],"name":"getBalance","outputs":[{"name":"bal","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[],"name":"depositETH","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"constant":false,"inputs":[{"name":"Wh","type":"int256"}],"name":"estUsage","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"demand","type":"int256"},{"name":"price","type":"int256"}],"name":"offerDemand","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"generation","type":"int256"},{"name":"price","type":"int256"}],"name":"offerGeneration","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"losses","type":"int256"}],"name":"recieveLossesEst","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"defineMP","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"getMP","outputs":[{"name":"bal","type":"int256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"Wh","type":"int256"}],"name":"actUsage","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"amount","type":"int256"}],"name":"setUseCharge","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"settle","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"addr","type":"address"}],"name":"timeToDie","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"}]
+ var voltContract = web3.eth.contract(contractabi)
+ var app = voltContract.at(contractadd)
+ var owner = web3.eth.accounts[0]
+ var account1 = web3.eth.accounts[1]
+ var account2 = web3.eth.accounts[2]
+ var account3 = web3.eth.accounts[3]
+ var account4 = web3.eth.accounts[4]
+ var account5 = web3.eth.accounts[5]
+ app.depositETH({from: account1, value: 10000000000000000000})
+ app.depositETH({from: account2, value: 10000000000000000000})
+ app.depositETH({from: account3, value: 1000000000000000000})
+ app.depositETH({from: account4, value: 1000000000000000000})
+ app.depositETH({from: account5, value: 1000000000000000000})
+ app.estUsage(700000,{from: account1})
+ app.estUsage(600000,{from: account2})
+ app.offerGeneration(420000,10000000000000,{from:account3})
+ app.offerGeneration(450000,9999999999990,{from:account4})
+ app.offerGeneration(250000,11111111111110,{from:account5})
+ app.recieveLossesEst(2000,{from:owner})
+ app.setUseCharge(200000000,{from:owner})
+ app.defineMP({from:owner})
+ app.actUsage(710000,{from:account1})
+ app.actUsage(599999,{from:account2})
+ app.actUsage(450000,{from:account3})
+ app.actUsage(420000,{from:account4})
+ app.actUsage(200000,{from:account5})
+ app.settle({from:owner})
+ app.timeToDie(owner,{from:owner})
+
+
+console2:--------------------------------------------------------------------------------------------------------
+tail -f myEth.log
+
+console3:--------------------------------------------------------------------------------------------------------
+truffle migrate --reset --network mytestnet
+
+bottom of build/contracts/VoltExchange.json look for the "address": under 1985
+
