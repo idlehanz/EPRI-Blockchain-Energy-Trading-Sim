@@ -76,8 +76,7 @@ app = Flask(__name__)
 @app.route('/test/<testname>')
 def test(testname):
     test_path = TEST_DIR + testname
-    #return run_test(test_path)
-    return test_path
+    return run_test(test_path)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
