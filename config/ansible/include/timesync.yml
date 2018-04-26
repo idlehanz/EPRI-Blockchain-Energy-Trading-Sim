@@ -1,0 +1,7 @@
+---
+- name: Add NTP server to systemd-timesyncd
+  lineinfile:
+    dest: /etc/systemd/timesyncd.conf
+    regexp: '^NTP='
+    insertafter: '\[Time\]'
+    line: 'NTP=192.168.15.1'

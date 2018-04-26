@@ -1,0 +1,28 @@
+---
+- hosts: all
+  remote_user: pi
+  become: yes
+  become_method: sudo
+  vars:
+    new_hostname: "402raspberrypi_{{ number }}"
+  tasks:
+    - name: Set hostname
+      hostname: name={{ new_hostname }}
+
+    - name: Set hostname in /etc/hosts
+      lineinfile:
+        dest: /etc/hosts
+        regexp: '^127\.0\.1\.1'
+        line: '127.0.1.1	{{ new_hostname }}'
+
+    # Handle the rest of setup
+    - import_tasks: include/timesync.yml
+    - import_tasks: include/docker.yml
+
+    - name: Rebooot
+      command: reboot
+
+    - name: Wait for host to come back
+      wait_for_connection:
+        timeout: 120
+        delay: 20

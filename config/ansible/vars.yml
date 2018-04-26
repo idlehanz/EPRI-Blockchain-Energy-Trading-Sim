@@ -1,0 +1,36 @@
+dhcp:
+  # DHCP dynamic assignment range. Needs to match subnet
+  range:
+    min: 192.168.15.100
+    max: 192.168.15.150
+  # DHCP static host assignments
+  hosts: 
+  # 402raspberrypi_2
+  - mac: b8:27:eb:62:d3:ce
+    ip: 192.168.15.2
+
+  # 402raspberrypi_3
+  - mac: b8:27:eb:37:d3:74
+    ip: 192.168.15.3
+
+  # 402raspberrypi_4
+  - mac: b8:27:eb:e2:57:0d
+    ip: 192.168.15.4
+
+  # 402raspberrypi_5
+  - mac: b8:27:eb:b2:dc:7f
+    ip: 192.168.15.5
+
+  # 402raspberrypi_6
+  - mac: b8:27:eb:6e:50:cf
+    ip: 192.168.15.6
+
+# Network address for the private network.
+# Should be in CIDR format: x.x.x.x/x
+subnet: 192.168.15.0/24
+
+# IP Address of the 
+manager_ip: 192.168.15.1
+
+# Swapfile size
+swap_size: 2048

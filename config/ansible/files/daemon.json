@@ -1,0 +1,4 @@
+{
+    "insecure-registries": ["registry:5000", "192.168.15.1:5000"],
+    "dns-opts": ["ndots:5"]
+}

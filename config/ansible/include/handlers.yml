@@ -1,0 +1,27 @@
+---
+- name: restart dphys-swapfile
+  service:
+    name: dphys-swapfile
+    state: restarted
+
+- name: restart docker
+  service:
+    name: docker
+    state: restarted
+
+- name: restart dnsmasq
+  service:
+    name: dnsmasq
+    state: restarted
+
+- name: restart dhcpcd
+  service:
+    name: dhcpcd
+    state: restarted
+
+- name: reapply iptables
+  systemd:
+    name: sd-iptables.service
+    state: started
+    enabled: yes
+    daemon_reload: yes

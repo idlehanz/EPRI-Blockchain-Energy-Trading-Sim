@@ -1,0 +1,47 @@
+---
+- hosts: all
+  remote_user: pi
+  become: yes
+  become_method: sudo
+  handlers:
+    - include: include/handlers.yml
+  tasks:
+    - name: Include config variables
+      include_vars:
+        name: cluster
+        file: vars.yml
+
+    - name: Increase swap file size
+      lineinfile:
+        dest: /etc/dphys-swapfile
+        regexp: '^CONF_SWAPSIZE='
+        line: 'CONF_SWAPSIZE={{ cluster.swap_size }}'
+      notify: 
+        - restart dphys-swapfile
+
+    - include: include/docker.yml
+
+- hosts: workers
+  remote_user: pi
+  become: yes
+  become_method: sudo
+  tasks:
+    - name: Include config variables
+      include_vars:
+        name: cluster
+        file: vars.yml
+
+    - include: include/timesync.yml
+
+- hosts: managers
+  remote_user: pi
+  become: yes
+  become_method: sudo
+  tasks:
+    - name: Include config variables
+      include_vars:
+        name: cluster
+        file: vars.yml
+
+    - include: include/network.yml
+    - include: include/timeserver.yml

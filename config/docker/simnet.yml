@@ -1,0 +1,98 @@
+version: '3.3'
+services:
+  bootnode:
+    # note: bootnode requires alltools
+    image: "192.168.15.1:5000/armbuilds/client-all"
+    deploy:
+      placement:
+        constraints:
+          - node.hostname == 402raspberrypi_1
+      replicas: 1
+    configs:
+      - source: genesis_block
+        target: /root/genesis.json
+      - source: bootnode_key
+        target: /root/bootnode.key
+    networks:
+      - ethnet
+    entrypoint:
+      - sh
+      - -c
+    command: >-
+      "geth --datadir /root/data init /root/genesis.json
+      && bootnode --nodekey /root/bootnode.key"
+
+  customer:
+    # On x86: "ethereum/client-go:stable"
+    image: "192.168.15.1:5000/armbuilds/client"
+    deploy:
+      replicas: 5
+    depends_on:
+      - bootnode
+    configs:
+      - source: genesis_block
+        target: /root/genesis.json
+      - source: bootnode_url
+        target: /root/bootnode
+    networks:
+      - ethnet
+    entrypoint:
+      - sh
+      - -c
+    # Startup is delayed to give the bootnode time to start
+    # The enode url must be constructed at runtime because it needs an IP address
+    command: >-
+      "geth --datadir /root/data init /root/genesis.json
+      && sleep 10
+      && geth --datadir /root/data --networkid 4215 --rpc --bootnodes
+      --rpc --rpcapi eth,web3,shh,admin,debug,miner,personal,txpool,clique
+      enode://$$(cat /root/bootnode)@$$(nslookup eth_bootnode 2>/dev/null | grep 1: | cut -d ' ' -f 3):30301"
+
+  tester:
+    # On x86: "ethereum/client-go:stable"
+    image: "192.168.15.1:5000/armbuilds/tester"
+    depends_on:
+      - customer
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.hostname == 402raspberrypi_1
+    networks:
+      - ethnet
+
+  miner:
+    image: "192.168.15.1:5000/armbuilds/client"
+    deploy:
+      placement:
+        constraints:
+          - node.hostname == 402raspberrypi_6
+      replicas: 1
+    configs:
+      - source: genesis_block
+        target: /root/genesis.json
+      - source: bootnode_url
+        target: /root/bootnode
+    entrypoint:
+      - sh
+      - -c
+    command: >-
+      "geth --datadir /root/data init /root/genesis.json
+      && sleep 10
+      && geth --datadir /root/data
+      --mine --etherbase '0x323c73bb35659395ce7b2e8cbce612983527fa35'
+      --rpc --rpcapi eth,web3,shh,admin,debug,miner,personal,txpool,clique
+      --networkid 4215 --bootnodes
+      enode://$$(cat /root/bootnode)@$$(nslookup eth_bootnode 2>/dev/null | grep 1: | cut -d ' ' -f 3):30301"
+    networks:
+      - ethnet
+
+networks:
+  ethnet:
+configs:
+  genesis_block:
+    external: true
+  bootnode_url:
+    external: true
+  bootnode_key:
+    external: true

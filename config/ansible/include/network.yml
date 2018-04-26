@@ -1,0 +1,34 @@
+---
+- name: Install dnsmasq
+  apt: name=dnsmasq state=installed
+
+- name: Disable IPv6 routing
+  lineinfile:
+    dest: /etc/sysctl.conf
+    line: 'net.ipv6.conf.all.forwarding=0'
+
+- name: Install firewall rule script
+  copy:
+    src: ../files/sd15-iptables.sh
+    dest: /etc/sd15-iptables.sh
+
+- name: Install firewall rule service
+  copy:
+    src: ../files/sd-iptables.service
+    dest: /etc/systemd/system/sd-iptables.service 
+  notify:
+    - reapply iptables
+
+- name: Configure DHCP client
+  template:
+    src: ../files/manager-dhcpcd.conf
+    dest: /etc/dhcpcd.conf
+  notify:
+    - restart dhcpcd
+
+- name: Configure dnsmasq
+  template:
+    src: ../files/dnsmasq.conf
+    dest: /etc/dnsmasq.conf
+  notify:
+    - restart dnsmasq

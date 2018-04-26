@@ -1,0 +1,24 @@
+---
+- name: Check if Docker is installed
+  stat:
+    path: /usr/bin/docker
+  register: docker_bin
+
+- name: Get Docker install script
+  get_url:
+    url: https://get.docker.com/
+    dest: /tmp/docker-install.sh
+    checksum: sha256:b12dbb48477502e793292d6f556076e9c8e3d731741747698776af52bb84d7cb.
+    mode: 0755
+  when: docker_bin.stat.exists == false
+
+- name: Run install script
+  command: sh /tmp/docker-install.sh
+  when: docker_bin.stat.exists == false
+
+- name: Configure Docker daemon
+  copy:
+    src: ../files/daemon.json
+    dest: /etc/docker/daemon.json
+  notify:
+    - restart docker

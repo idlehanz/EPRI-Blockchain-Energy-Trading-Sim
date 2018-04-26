@@ -1,0 +1,9 @@
+---
+- name: Install chronyd
+  apt: name=chrony state=installed
+
+- name: Install chrony config
+  lineinfile:
+    dest: /etc/chrony/chrony.conf
+    regexp: '^allow'
+    line: 'allow {{ cluster.subnet }}'

@@ -1,0 +1,10 @@
+[Unit]
+Description=Apply firewall rules for simulation network
+Before=docker.service dnsmasq.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh /etc/sd15-iptables.sh
+
+[Install]
+WantedBy=multi-user.target
