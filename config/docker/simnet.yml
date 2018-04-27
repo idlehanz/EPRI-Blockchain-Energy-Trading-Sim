@@ -73,14 +73,20 @@ services:
         target: /root/genesis.json
       - source: bootnode_url
         target: /root/bootnode
+      - source: miner_key
+        target: /root/miner_key
     entrypoint:
       - sh
       - -c
     command: >-
       "geth --datadir /root/data init /root/genesis.json
+      && cp /root/miner_key /root/data/keystore/UTC--2018-04-25T17-56-13.344495045Z--43812ca87d1d5196ad1b33382d9c7597a30f21da
+      && echo '1fefe00ec80d99ea8f36cec77617c63bf4ebf6af' > /root/password
       && sleep 10
       && geth --datadir /root/data
-      --mine --etherbase '0x323c73bb35659395ce7b2e8cbce612983527fa35'
+      --unlock '0x43812ca87d1d5196ad1b33382d9c7597a30f21da'
+      --password /root/password
+      --mine --etherbase '0x43812ca87d1d5196ad1b33382d9c7597a30f21da'
       --rpc --rpcapi eth,web3,shh,admin,debug,miner,personal,txpool,clique
       --networkid 4215 --bootnodes
       enode://$$(cat /root/bootnode)@$$(nslookup eth_bootnode 2>/dev/null | grep 1: | cut -d ' ' -f 3):30301"
@@ -89,10 +95,13 @@ services:
 
 networks:
   ethnet:
+
 configs:
   genesis_block:
-    external: true
+    file: ../../blockchain/voltchain.json
   bootnode_url:
     external: true
   bootnode_key:
     external: true
+  miner_key:
+    file: ../../blockchain/blockdata/keystore/UTC--2018-04-25T17-56-13.344495045Z--43812ca87d1d5196ad1b33382d9c7597a30f21da   
