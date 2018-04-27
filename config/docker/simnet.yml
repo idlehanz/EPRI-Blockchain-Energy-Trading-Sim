@@ -44,8 +44,9 @@ services:
     command: >-
       "geth --datadir /root/data init /root/genesis.json
       && sleep 10
-      && geth --datadir /root/data --networkid 4215 --rpc --bootnodes
+      && geth --datadir /root/data
       --rpc --rpcapi eth,web3,shh,admin,debug,miner,personal,txpool,clique
+      --networkid 4215 --bootnodes
       enode://$$(cat /root/bootnode)@$$(nslookup eth_bootnode 2>/dev/null | grep 1: | cut -d ' ' -f 3):30301"
 
   tester:
