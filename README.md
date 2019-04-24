@@ -1,1 +1,1 @@
-# UT-Blockchain-Energy-Trading-Sim
+# EPRI-Blockchain-Energy-Trading-Sim
